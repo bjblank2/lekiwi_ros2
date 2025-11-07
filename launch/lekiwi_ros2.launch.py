@@ -101,7 +101,7 @@ def generate_launch_description():
         
         Node(
             package='lekiwi_ros2',
-            executable='lekiwi_ros2',
+            executable='lekiwi_ros2_node',
             name='lekiwi_ros2_node',
             parameters=[
                 LaunchConfiguration('calibration_params'),
