@@ -25,7 +25,7 @@ from std_msgs.msg import Header
 from std_srvs.srv import SetBool
 
 # Import SO101 communication components (local implementation)
-from lekiwi_ros2.so101 import Motor, MotorCalibration, MotorNormMode, FeetechMotorsBus, OperatingMode
+from so101 import Motor, MotorCalibration, MotorNormMode, FeetechMotorsBus, OperatingMode
 
 
 class Ros2LeKiwiNode(Node):
