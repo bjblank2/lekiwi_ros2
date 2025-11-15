@@ -54,12 +54,13 @@ class Ros2LeKiwiNode(Node):
             'max_angular_speed': 2.0,
             'axis_linear_x': 1,
             'axis_linear_y': 0,
-            'axis_angular_z': 3,
+            'axis_angular_z': 2,
             'wheel_separation_x': 0.3,
             'wheel_separation_y': 0.3,
             'wheel_radius': 0.05,
             'ticks_per_rev': 4096,
             'wheel_count': 3,
+            'wheel_control_mode': 'joy',  # 'joy' or 'cmd_vel'
         })
 
         # Get parameter values
@@ -120,6 +121,14 @@ class Ros2LeKiwiNode(Node):
         
         wheel_count_val = self.get_parameter('wheel_count').value
         self.wheel_count = int(wheel_count_val) if wheel_count_val is not None else 3
+        
+        wheel_control_mode_val = self.get_parameter('wheel_control_mode').value
+        self.wheel_control_mode = str(wheel_control_mode_val) if wheel_control_mode_val is not None else 'joy'
+        if self.wheel_control_mode not in ['joy', 'cmd_vel']:
+            self.get_logger().warn(
+                f'Invalid wheel_control_mode: {self.wheel_control_mode}. Using "joy" as default.'
+            )
+            self.wheel_control_mode = 'joy'
 
         # Load arm calibration if provided
         arm_calibration = self.load_calibration_from_parameters('arm_calibration')
@@ -194,13 +203,29 @@ class Ros2LeKiwiNode(Node):
         self.current_wheel_velocities = {wheel: 0.0 for wheel in self.wheel_names}
 
         # ========== ROS Subscribers ==========
-        # Joystick input for base control
-        self.joy_sub = self.create_subscription(
-            Joy,
-            '/joy',
-            self.joy_callback,
-            10
-        )
+        # Joystick input for base control (only if mode is 'joy')
+        if self.wheel_control_mode == 'joy':
+            self.joy_sub = self.create_subscription(
+                Joy,
+                '/joy',
+                self.joy_callback,
+                10
+            )
+            self.get_logger().info('Wheel control mode: JOYSTICK (/joy)')
+        else:
+            self.joy_sub = None
+            self.get_logger().info('Wheel control mode: CMD_VEL (/cmd_vel)')
+        
+        # cmd_vel input for base control (only if mode is 'cmd_vel')
+        if self.wheel_control_mode == 'cmd_vel':
+            self.cmd_vel_sub = self.create_subscription(
+                Twist,
+                '/cmd_vel',
+                self.cmd_vel_callback,
+                10
+            )
+        else:
+            self.cmd_vel_sub = None
 
         # leader arm joint states for arm control
         self.joint_state_sub = self.create_subscription(
@@ -483,18 +508,51 @@ class Ros2LeKiwiNode(Node):
         vy = linear_y_raw * self.max_linear_speed
         omega = angular_z_raw * self.max_angular_speed
 
+        # Use shared wheel control method
+        self.apply_wheel_velocities(vx, vy, omega)
+
+    def cmd_vel_callback(self, msg):
+        """Callback for cmd_vel messages - controls base movement."""
+        if not self.bus.is_connected:
+            return
+
+        # Extract velocities from Twist message
+        # Note: cmd_vel typically uses linear.x for forward/back, linear.y for strafe (if supported),
+        # and angular.z for rotation
+        vx = msg.linear.x
+        vy = msg.linear.y
+        omega = msg.angular.z
+
+        # Apply speed limits (clamp to max speeds)
+        vx = max(-self.max_linear_speed, min(self.max_linear_speed, vx))
+        vy = max(-self.max_linear_speed, min(self.max_linear_speed, vy))
+        omega = max(-self.max_angular_speed, min(self.max_angular_speed, omega))
+
+        # Use shared wheel control method
+        self.apply_wheel_velocities(vx, vy, omega)
+
+    def apply_wheel_velocities(self, vx, vy, omega):
+        """
+        Shared method to apply wheel velocities from base velocities.
+        
+        Args:
+            vx: Linear velocity in x direction [m/s]
+            vy: Linear velocity in y direction [m/s]
+            omega: Angular velocity [rad/s]
+        """
         # Calculate wheel velocities based on wheel count
         if self.wheel_count == 3:
             wheel_velocities = self.omni3_kinematics(vx, vy, omega)
         else:
             wheel_velocities = self.mecanum_kinematics(vx, vy, omega)
 
-        # Publish cmd_vel for compatibility
-        twist_msg = Twist()
-        twist_msg.linear.x = vx
-        twist_msg.linear.y = vy
-        twist_msg.angular.z = omega
-        self.twist_pub.publish(twist_msg)
+        # Publish cmd_vel for compatibility (only in joy mode to avoid feedback loop)
+        if self.wheel_control_mode == 'joy':
+            twist_msg = Twist()
+            twist_msg.linear.x = vx
+            twist_msg.linear.y = vy
+            twist_msg.angular.z = omega
+            self.twist_pub.publish(twist_msg)
 
         # Send wheel velocity commands directly to servos
         try:

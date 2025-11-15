@@ -98,6 +98,11 @@ def generate_launch_description():
             default_value='4096',
             description='Encoder ticks per revolution'
         ),
+        DeclareLaunchArgument(
+            'wheel_control_mode',
+            default_value='joy',
+            description='Wheel control mode: "joy" for /joy messages, "cmd_vel" for /cmd_vel messages'
+        ),
         
         Node(
             package='lekiwi_ros2',
@@ -126,6 +131,7 @@ def generate_launch_description():
                     'wheel_radius': LaunchConfiguration('wheel_radius'),
                     'wheel_count': LaunchConfiguration('wheel_count'),
                     'ticks_per_rev': LaunchConfiguration('ticks_per_rev'),
+                    'wheel_control_mode': LaunchConfiguration('wheel_control_mode'),
                 },
             ],
             output='screen'
