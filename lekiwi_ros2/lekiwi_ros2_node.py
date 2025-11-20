@@ -684,12 +684,14 @@ class Ros2LeKiwiNode(Node):
             arm_motors = ["shoulder_pan", "shoulder_lift", "elbow_flex", 
                          "wrist_flex", "wrist_roll", "gripper"]
             positions = self.bus.sync_read("Present_Position", arm_motors, normalize=True)
+            velocities = self.bus.sync_read("Present_Velocity", arm_motors, normalize=False)
 
             self.current_arm_joint_states = positions.copy()
 
             # Map SO101 names to our names
             joint_names = []
             joint_positions = []
+            joint_velocities = []
             reverse_map = {v: k for k, v in self.joint_name_map.items()}
             
             for so101_name, position in positions.items():
@@ -697,6 +699,9 @@ class Ros2LeKiwiNode(Node):
                 if our_name:
                     joint_names.append(our_name)
                     joint_positions.append(math.radians(float(position)))
+                    # Convert velocity from raw value to rad/s
+                    raw_vel = velocities.get(so101_name, 0)
+                    joint_velocities.append(self.raw_vel_to_rad_s(raw_vel))
 
             if not joint_positions:
                 return
@@ -706,7 +711,7 @@ class Ros2LeKiwiNode(Node):
             joint_state_msg.header.stamp = self.get_clock().now().to_msg()
             joint_state_msg.name = joint_names
             joint_state_msg.position = joint_positions
-            joint_state_msg.velocity = [0.0] * len(joint_positions)
+            joint_state_msg.velocity = joint_velocities
             joint_state_msg.effort = [0.0] * len(joint_positions)
             
             self.follower_arm_joint_state_pub.publish(joint_state_msg)
