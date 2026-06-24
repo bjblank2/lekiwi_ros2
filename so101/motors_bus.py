@@ -21,6 +21,7 @@
 
 import abc
 import logging
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -729,7 +730,6 @@ class MotorsBus(abc.ABC):
         homing_offsets = self._get_half_turn_homings(actual_positions)
         
         # Write homing offsets one at a time with small delays
-        import time
         for motor, offset in homing_offsets.items():
             self.write("Homing_Offset", motor, offset)
             time.sleep(0.05)  # 50ms delay between each EEPROM write
@@ -799,9 +799,8 @@ class MotorsBus(abc.ABC):
         input_thread = threading.Thread(target=wait_for_enter, daemon=True)
         input_thread.start()
         
-        import time
         import sys
-        
+
         # Print table header once at the start
         if display_values:
             print(f"{'Joint':<18} | {'Position':>8} | {'Min':>6} | {'Max':>6} | {'Range':>6}")
@@ -1066,21 +1065,17 @@ class MotorsBus(abc.ABC):
         else:
             raise ValueError(length)
 
+        # Flush any leftover bytes from a prior write ACK or partial response before
+        # the first attempt.  clearPort is an instantaneous buffer discard — no delay
+        # is needed afterwards.
+        try:
+            self.port_handler.clearPort()
+            if hasattr(self.port_handler, 'ser') and hasattr(self.port_handler.ser, 'reset_input_buffer'):
+                self.port_handler.ser.reset_input_buffer()
+        except Exception:
+            pass
+
         for n_try in range(1 + num_retry):
-            # Clear port buffer before each read attempt to ensure fresh data
-            # This is important for Feetech motors which may return stale cached values
-            try:
-                self.port_handler.clearPort()
-                # Also try to reset the serial port's input buffer directly if available
-                if hasattr(self.port_handler, 'ser') and hasattr(self.port_handler.ser, 'reset_input_buffer'):
-                    self.port_handler.ser.reset_input_buffer()
-            except Exception:
-                pass  # Ignore if clearPort fails
-            
-            # Small delay after clearing to ensure port is ready
-            import time
-            time.sleep(0.005)  # 5ms delay
-            
             value, comm, error = read_fn(self.port_handler, motor_id, address)
             if self._is_comm_success(comm):
                 break
