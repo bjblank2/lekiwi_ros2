@@ -14,6 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'params'), glob('params/*.yaml')),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+        (os.path.join('share', package_name, 'urdf'), glob('urdf/*')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,7 +30,12 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'lekiwi_ros2_node = lekiwi_ros2.lekiwi_ros2_node:main'
+            'lekiwi_ros2_node = lekiwi_ros2.lekiwi_ros2_node:main',
+            'lerre_ros2_node = lekiwi_ros2.lerre_ros2_node:main',
+            'so101_calibration_node = lekiwi_ros2.so101_calibration_node:main',
+            'wheel_kinematics_node = lekiwi_ros2.wheel_kinematics_node:main',
+            'tank_drive_kinematics_node = lekiwi_ros2.tank_drive_kinematics_node:main',
+            'arm_teleop_node = lekiwi_ros2.arm_teleop_node:main',
         ],
     },
 )
