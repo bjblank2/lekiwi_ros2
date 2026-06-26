@@ -54,7 +54,7 @@ class Ros2LeRReNode(Node):
             'max_angular_speed': 2.0,
             'axis_linear_x': 1,
             'axis_angular_z': 3,
-            'track_seperation': 0.2,
+            'track_separation': 0.2,
             'wheel_radius': 0.05,
             'ticks_per_rev': 4096,
             'wheel_control_mode': 'joy',  # 'joy' or 'cmd_vel'
@@ -98,8 +98,8 @@ class Ros2LeRReNode(Node):
         axis_z_val = self.get_parameter('axis_angular_z').value
         self.axis_angular_z = int(axis_z_val) if axis_z_val is not None else 3
 
-        track_sep_val = self.get_parameter('track_seperation').value
-        self.track_seperation = float(track_sep_val) if track_sep_val is not None else 0.2
+        track_sep_val = self.get_parameter('track_separation').value
+        self.track_separation = float(track_sep_val) if track_sep_val is not None else 0.2
 
         wheel_r_val = self.get_parameter('wheel_radius').value
         self.wheel_radius = float(wheel_r_val) if wheel_r_val is not None else 0.05
@@ -389,10 +389,7 @@ class Ros2LeRReNode(Node):
 
         if (self.axis_linear_x >= len(msg.axes) or
                 self.axis_angular_z >= len(msg.axes)):
-            self.get_logger().warn_throttle(
-                2.0,
-                'Axis index out of range for received Joy message'
-            )
+            self.get_logger().warn('Axis index out of range for received Joy message')
             return
 
         linear_x_raw = msg.axes[self.axis_linear_x]
@@ -458,7 +455,7 @@ class Ros2LeRReNode(Node):
         Returns:
             Tuple of (left_track_vel, right_track_vel) [m/s]
         """
-        half_sep = self.track_seperation / 2.0
+        half_sep = self.track_separation / 2.0
         left_vel = vx - omega * half_sep
         right_vel = vx + omega * half_sep
         return left_vel, right_vel

@@ -208,10 +208,8 @@ class So101CalibrationNode(Node):
         print('  Step 2: Setting homing offsets from middle position')
         print('-'*70)
         print(f'\n  Move {self.arm_id} to the middle of its range of motion, then press ENTER...')
-        
-        import time
-        time.sleep(0.2)
-        
+        input()
+
         # Set half-turn homings (mirrors lerobot: makes current position = 2047 = half-turn)
         print('  Setting homing offsets...', end=' ', flush=True)
         try:

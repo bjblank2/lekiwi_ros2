@@ -105,7 +105,7 @@ class Ros2LeKiwiNode(Node):
         self.axis_linear_y = int(axis_y_val) if axis_y_val is not None else 0
         
         axis_z_val = self.get_parameter('axis_angular_z').value
-        self.axis_angular_z = int(axis_z_val) if axis_z_val is not None else 3
+        self.axis_angular_z = int(axis_z_val) if axis_z_val is not None else 2
         
         wheel_x_val = self.get_parameter('wheel_separation_x').value
         self.wheel_separation_x = float(wheel_x_val) if wheel_x_val is not None else 0.3
@@ -483,10 +483,7 @@ class Ros2LeKiwiNode(Node):
         if (self.axis_linear_x >= len(msg.axes) or
             self.axis_linear_y >= len(msg.axes) or
             self.axis_angular_z >= len(msg.axes)):
-            self.get_logger().warn_throttle(
-                2.0,
-                'Axis index out of range for received Joy message'
-            )
+            self.get_logger().warn('Axis index out of range for received Joy message')
             return
 
         # Get joystick values
