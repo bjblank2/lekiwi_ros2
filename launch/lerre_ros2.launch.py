@@ -85,7 +85,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'wheel_control_mode',
-            default_value='joy',
+            default_value='cmd_vel',
             description='Wheel control mode: "joy" for /joy messages, "cmd_vel" for /cmd_vel messages'
         ),
 
@@ -118,6 +118,7 @@ def generate_launch_description():
             ],
             remappings=[
                 ('/joy', '/spacemouse/joy'),
+                ('/cmd_vel', '/spacemouse/cmd_vel'),
             ],
             output='screen'
         ),

@@ -2,7 +2,6 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, RegisterEventHandler
-from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -17,14 +16,7 @@ def generate_launch_description():
 
     robot_description = ParameterValue(Command(['xacro ', urdf_file]), value_type=str)
 
-    use_joy = LaunchConfiguration('use_joy')
     leader_arm_id = LaunchConfiguration('leader_arm_id')
-
-    declare_use_joy = DeclareLaunchArgument(
-        'use_joy',
-        default_value='true',
-        description='Enable joystick input for base control',
-    )
 
     declare_leader_arm_id = DeclareLaunchArgument(
         'leader_arm_id',
@@ -89,20 +81,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        condition=IfCondition(use_joy),
-    )
-
-    joy_to_twist_node = Node(
-        package='joy_to_twist',
-        executable='joy_to_twist_node',
-        condition=IfCondition(use_joy),
-    )
-
     return LaunchDescription([
-        declare_use_joy,
         declare_leader_arm_id,
         robot_state_publisher,
         controller_manager,
@@ -110,6 +89,4 @@ def generate_launch_description():
         delay_controllers_after_jsb,
         tank_drive_kinematics_node,
         arm_teleop_node,
-        joy_node,
-        joy_to_twist_node,
     ])
