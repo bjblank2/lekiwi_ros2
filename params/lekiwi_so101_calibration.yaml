@@ -1,4 +1,4 @@
-lerre_ros2_node:
+lekiwi_ros2_node:
   ros__parameters:
     calibration:
       elbow_flex:

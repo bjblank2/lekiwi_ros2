@@ -646,24 +646,26 @@ class Ros2LeKiwiNode(Node):
             if not goal_positions:
                 return
 
-            # Apply safety limits
+            # Apply safety limits. If we can't read present position, don't guess —
+            # skip this command rather than sending an unclamped goal.
             if self.max_relative_target_deg > 0:
                 try:
-                    arm_motors = ["shoulder_pan", "shoulder_lift", "elbow_flex", 
+                    arm_motors = ["shoulder_pan", "shoulder_lift", "elbow_flex",
                                  "wrist_flex", "wrist_roll", "gripper"]
                     present_positions = self.bus.sync_read("Present_Position", arm_motors, normalize=True)
-                    
-                    for so101_name, goal_pos in goal_positions.items():
-                        if so101_name in present_positions:
-                            present_pos = present_positions[so101_name]
-                            diff = abs(goal_pos - present_pos)
-                            if diff > self.max_relative_target_deg:
-                                if goal_pos > present_pos:
-                                    goal_positions[so101_name] = present_pos + self.max_relative_target_deg
-                                else:
-                                    goal_positions[so101_name] = present_pos - self.max_relative_target_deg
                 except Exception as e:
-                    self.get_logger().warn(f'Could not apply safety limits: {e}')
+                    self.get_logger().warn(f'Could not apply safety limits, skipping command: {e}')
+                    return
+
+                for so101_name, goal_pos in goal_positions.items():
+                    if so101_name in present_positions:
+                        present_pos = present_positions[so101_name]
+                        diff = abs(goal_pos - present_pos)
+                        if diff > self.max_relative_target_deg:
+                            if goal_pos > present_pos:
+                                goal_positions[so101_name] = present_pos + self.max_relative_target_deg
+                            else:
+                                goal_positions[so101_name] = present_pos - self.max_relative_target_deg
 
             # Send command to follower arm
             self.bus.sync_write("Goal_Position", goal_positions)
