@@ -24,8 +24,8 @@ from sensor_msgs.msg import Joy, JointState
 from std_msgs.msg import Header
 from std_srvs.srv import SetBool
 
-# Import SO101 communication components (local implementation)
-from so101 import Motor, MotorCalibration, MotorNormMode, FeetechMotorsBus, OperatingMode
+# Import SO101 communication components (shared driver package)
+from feetech_python_driver import Motor, MotorCalibration, MotorNormMode, FeetechMotorsBus, OperatingMode
 
 
 class Ros2LeKiwiNode(Node):

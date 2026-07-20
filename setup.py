@@ -7,7 +7,7 @@ package_name = 'lekiwi_ros2'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=find_packages(exclude=['test', 'so101', 'so101.*']),
+    packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -31,10 +31,8 @@ setup(
     entry_points={
         'console_scripts': [
             'lekiwi_ros2_node = lekiwi_ros2.lekiwi_ros2_node:main',
-            'lerre_ros2_node = lekiwi_ros2.lerre_ros2_node:main',
             'so101_calibration_node = lekiwi_ros2.so101_calibration_node:main',
             'wheel_kinematics_node = lekiwi_ros2.wheel_kinematics_node:main',
-            'tank_drive_kinematics_node = lekiwi_ros2.tank_drive_kinematics_node:main',
             'arm_teleop_node = lekiwi_ros2.arm_teleop_node:main',
         ],
     },
